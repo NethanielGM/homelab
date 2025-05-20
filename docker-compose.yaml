@@ -1,0 +1,216 @@
+services:
+  sonarr:
+    image: linuxserver/sonarr
+    container_name: sonarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_DIR}/sonarr:/config
+      - ${SHOWS_DIR}:/shows
+      - ${DOWNLOADS_DIR}:/downloads
+    ports:
+      - "8989:8989"
+    restart: unless-stopped
+
+  radarr:
+    image: linuxserver/radarr
+    container_name: radarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_DIR}/radarr:/config
+      - ${MOVIES_DIR}:/movies
+      - ${DOWNLOADS_DIR}:/downloads
+    ports:
+      - "7878:7878"
+    restart: unless-stopped
+
+  lidarr:
+    image: linuxserver/lidarr
+    container_name: lidarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_DIR}/lidarr:/config
+      - ${MUSIC_DIR}:/music
+      - ${DOWNLOADS_DIR}:/downloads
+    ports:
+      - "8686:8686"
+    restart: unless-stopped
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr
+    container_name: prowlarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_DIR}/prowlarr:/config
+    ports:
+      - "9696:9696"
+    restart: unless-stopped
+
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    environment:
+      - LOG_LEVEL=info
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_DIR}/jellyseerr:/app/config
+    ports:
+      - "5055:5055"
+    restart: unless-stopped
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=info
+      - TZ=${TZ}
+    ports:
+      - "8191:8191"
+    restart: unless-stopped
+
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    environment:
+      - VPN_SERVICE_PROVIDER=nordvpn
+      - OPENVPN_USER=${NORD_USER}
+      - OPENVPN_PASSWORD=${NORD_PASS}
+      - SERVER_CATEGORIES=p2p
+      - SERVER_COUNTRIES=${VPN_COUNTRY}
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_DIR}/gluetun:/gluetun
+    ports:
+      - "8880:8880"
+      - "6881:6881/tcp"
+      - "6881:6881/udp"
+    restart: unless-stopped
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent
+    container_name: qbittorrent
+    network_mode: "service:gluetun"
+    depends_on:
+      - gluetun
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - WEBUI_PORT=8880
+    volumes:
+      - ${CONFIG_DIR}/qbittorrent:/config
+      - ${DOWNLOADS_DIR}:/downloads
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    depends_on:
+      - jellyfin
+      - sonarr
+      - radarr
+      - lidarr
+      - prowlarr
+      - jellyseerr
+      - qbittorrent
+    volumes:
+      - ${CONFIG_DIR}/cloudflared:/etc/cloudflared:ro
+    command: tunnel run
+    networks:
+      default:
+      seafile:
+
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    ports:
+      - "8096:8096"
+      - "8920:8920"
+      - "7359:7359/udp"
+      - "1900:1900/udp"
+    volumes:
+      - ${CONFIG_DIR}/jellyfin:/config
+      - ${SHOWS_DIR}:/media/shows
+      - ${MOVIES_DIR}:/media/movies
+      - ${MUSIC_DIR}:/media/music
+      # - seafile-data:/media/seafile:ro
+      - ${SEAFILE_DIR}:/media/seafile:ro
+
+    restart: unless-stopped
+
+  mariadb:
+    image: mariadb:10.11
+    container_name: mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    volumes:
+      # - mariadb-data:/var/lib/mysql
+      - ${SQL_DIR}:/var/lib/mysql
+    networks:
+      - seafile
+
+  memcached:
+    image: memcached:1.6-alpine
+    container_name: seafile-memcached
+    entrypoint: memcached -m 256
+    networks:
+      - seafile
+
+  seafile:
+    image: seafileltd/seafile-mc:11.0-latest
+    container_name: seafile
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DB_HOST=mariadb
+      - DB_ROOT_PASSWD=${MYSQL_ROOT_PASSWORD}
+      - TIME_ZONE=${TZ}
+      - SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
+      - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
+      - SEAFILE_SERVER_LETSENCRYPT=${SEAFILE_SERVER_LETSENCRYPT}
+      - SEAFILE_SERVER_HOSTNAME=seafile.${SERVER_HOSTNAME}
+      - SERVICE_URL=https://seafile.${SERVER_HOSTNAME}
+      - CSRF_TRUSTED_ORIGINS=["https://seafile.${SERVER_HOSTNAME}"]
+
+    volumes:
+      # - seafile-data:/shared
+      - ${SEAFILE_DIR}:/shared
+    tmpfs:
+      - /opt/seafile/pids
+    depends_on:
+      - mariadb
+      - memcached
+    networks:
+      - seafile
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
+  seafile:
+    driver: bridge
+
+# volumes:
+#   seafile-data:
+#   mariadb-data:
