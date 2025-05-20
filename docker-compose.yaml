@@ -179,9 +179,6 @@ services:
   seafile:
     image: seafileltd/seafile-mc:11.0-latest
     container_name: seafile
-    # ports:
-    #   - "80:80"
-    #   - "443:443"
     expose:
       - "80"
     environment:
