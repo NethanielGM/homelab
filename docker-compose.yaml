@@ -179,9 +179,11 @@ services:
   seafile:
     image: seafileltd/seafile-mc:11.0-latest
     container_name: seafile
-    ports:
-      - "80:80"
-      - "443:443"
+    # ports:
+    #   - "80:80"
+    #   - "443:443"
+    expose:
+      - "80"
     environment:
       - DB_HOST=mariadb
       - DB_ROOT_PASSWD=${MYSQL_ROOT_PASSWORD}
@@ -192,7 +194,6 @@ services:
       - SEAFILE_SERVER_HOSTNAME=seafile.${SERVER_HOSTNAME}
       - SERVICE_URL=https://seafile.${SERVER_HOSTNAME}
       - CSRF_TRUSTED_ORIGINS=["https://seafile.${SERVER_HOSTNAME}"]
-
     volumes:
       # - seafile-data:/shared
       - ${SEAFILE_DIR}:/shared
