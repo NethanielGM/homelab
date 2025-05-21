@@ -135,7 +135,7 @@ services:
     networks:
       default:
       seafile:
-
+   
   jellyfin:
     image: jellyfin/jellyfin
     container_name: jellyfin
@@ -152,10 +152,9 @@ services:
       - ${CONFIG_DIR}/jellyfin:/config
       - ${SHOWS_DIR}:/media/shows
       - ${MOVIES_DIR}:/media/movies
-      - ${MUSIC_DIR}:/media/music    
-      - "Z:/Media:/media/seafile:ro"
-
-    restart: unless-stopped
+      - ${MUSIC_DIR}:/media/music
+      - "D:/SeaDriveCache/nethanie/My Libraries/Media:/media/seafile:ro"
+    restart: unless-stopped    
 
   mariadb:
     image: mariadb:10.11
@@ -188,7 +187,6 @@ services:
       - SEAFILE_SERVER_LETSENCRYPT=${SEAFILE_SERVER_LETSENCRYPT}
       - SEAFILE_SERVER_HOSTNAME=seafile.${SERVER_HOSTNAME}
       - SERVICE_URL=https://seafile.${SERVER_HOSTNAME}
-      - CSRF_TRUSTED_ORIGINS=["https://seafile.${SERVER_HOSTNAME}"]
     volumes:
       - seafile-data:/shared
     tmpfs:
