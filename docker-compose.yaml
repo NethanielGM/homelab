@@ -2,14 +2,16 @@ services:
   sonarr:
     image: linuxserver/sonarr
     container_name: sonarr
+    cpus: 0.5
+    mem_limit: 512m
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
     volumes:
       - ${CONFIG_DIR}/sonarr:/config
-      - ${SHOWS_DIR}:/shows
-      - ${DOWNLOADS_DIR}:/downloads
+      - shows-data:/shows
+      - downloads-data:/downloads
     ports:
       - "8989:8989"
     restart: unless-stopped
@@ -17,14 +19,16 @@ services:
   radarr:
     image: linuxserver/radarr
     container_name: radarr
+    cpus: 0.5
+    mem_limit: 512m
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
     volumes:
       - ${CONFIG_DIR}/radarr:/config
-      - ${MOVIES_DIR}:/movies
-      - ${DOWNLOADS_DIR}:/downloads
+      - movies-data:/movies
+      - downloads-data:/downloads
     ports:
       - "7878:7878"
     restart: unless-stopped
@@ -32,14 +36,16 @@ services:
   lidarr:
     image: linuxserver/lidarr
     container_name: lidarr
+    cpus: 0.5
+    mem_limit: 512m
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
     volumes:
       - ${CONFIG_DIR}/lidarr:/config
-      - ${MUSIC_DIR}:/music
-      - ${DOWNLOADS_DIR}:/downloads
+      - music-data:/music
+      - downloads-data:/downloads
     ports:
       - "8686:8686"
     restart: unless-stopped
@@ -47,6 +53,8 @@ services:
   prowlarr:
     image: lscr.io/linuxserver/prowlarr
     container_name: prowlarr
+    cpus: 0.5
+    mem_limit: 512m
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -60,6 +68,8 @@ services:
   jellyseerr:
     image: fallenbagel/jellyseerr:latest
     container_name: jellyseerr
+    cpus: 0.5
+    mem_limit: 512m
     environment:
       - LOG_LEVEL=info
       - TZ=${TZ}
@@ -72,6 +82,8 @@ services:
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     container_name: flaresolverr
+    cpus: 0.5
+    mem_limit: 512m
     environment:
       - LOG_LEVEL=info
       - TZ=${TZ}
@@ -82,6 +94,8 @@ services:
   gluetun:
     image: qmcgaw/gluetun
     container_name: gluetun
+    cpus: 0.5
+    mem_limit: 512m
     cap_add:
       - NET_ADMIN
     devices:
@@ -104,6 +118,8 @@ services:
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent
     container_name: qbittorrent
+    cpus: 0.5
+    mem_limit: 512m
     network_mode: "service:gluetun"
     depends_on:
       - gluetun
@@ -114,12 +130,14 @@ services:
       - WEBUI_PORT=8880
     volumes:
       - ${CONFIG_DIR}/qbittorrent:/config
-      - ${DOWNLOADS_DIR}:/downloads
+      - downloads-data:/downloads
     restart: unless-stopped
 
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
+    cpus: 0.5
+    mem_limit: 512m
     restart: unless-stopped
     depends_on:
       - jellyfin
@@ -133,12 +151,14 @@ services:
       - ${CONFIG_DIR}/cloudflared:/etc/cloudflared:ro
     command: tunnel run
     networks:
-      default:
-      seafile:
-   
+      - default
+      - seafile
+
   jellyfin:
     image: jellyfin/jellyfin
     container_name: jellyfin
+    cpus: 0.5
+    mem_limit: 512m
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -150,32 +170,40 @@ services:
       - "1900:1900/udp"
     volumes:
       - ${CONFIG_DIR}/jellyfin:/config
-      - ${SHOWS_DIR}:/media/shows
-      - ${MOVIES_DIR}:/media/movies
-      - ${MUSIC_DIR}:/media/music
-      - "D:/SeaDriveCache/nethanie/My Libraries/Media:/media/seafile:ro"
-    restart: unless-stopped    
+      - shows-data:/media/shows
+      - movies-data:/media/movies
+      - music-data:/media/music
+      - seafile-media:/media/seafile:ro
+    restart: unless-stopped
 
   mariadb:
     image: mariadb:10.11
     container_name: mariadb
+    cpus: 0.5
+    mem_limit: 512m
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     volumes:
       - mariadb-data:/var/lib/mysql
     networks:
       - seafile
+    restart: unless-stopped
 
   memcached:
     image: memcached:1.6-alpine
     container_name: seafile-memcached
+    cpus: 0.5
+    mem_limit: 128m
     entrypoint: memcached -m 256
     networks:
       - seafile
+    restart: unless-stopped
 
   seafile:
     image: seafileltd/seafile-mc:11.0-latest
     container_name: seafile
+    cpus: 0.5
+    mem_limit: 512m
     expose:
       - "80"
     environment:
@@ -205,5 +233,17 @@ networks:
     driver: bridge
 
 volumes:
+  shows-data:
+    driver: local
+  movies-data:
+    driver: local
+  music-data:
+    driver: local
+  downloads-data:
+    driver: local
+  seafile-media:
+    driver: local
   seafile-data:
+    driver: local
   mariadb-data:
+    driver: local
