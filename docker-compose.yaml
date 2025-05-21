@@ -152,9 +152,8 @@ services:
       - ${CONFIG_DIR}/jellyfin:/config
       - ${SHOWS_DIR}:/media/shows
       - ${MOVIES_DIR}:/media/movies
-      - ${MUSIC_DIR}:/media/music
-      # - seafile-data:/media/seafile:ro
-      - ${SEAFILE_DIR}:/media/seafile:ro
+      - ${MUSIC_DIR}:/media/music    
+      - "Z:/Media:/media/seafile:ro"
 
     restart: unless-stopped
 
@@ -164,8 +163,7 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     volumes:
-      # - mariadb-data:/var/lib/mysql
-      - ${SQL_DIR}:/var/lib/mysql
+      - mariadb-data:/var/lib/mysql
     networks:
       - seafile
 
@@ -192,8 +190,7 @@ services:
       - SERVICE_URL=https://seafile.${SERVER_HOSTNAME}
       - CSRF_TRUSTED_ORIGINS=["https://seafile.${SERVER_HOSTNAME}"]
     volumes:
-      # - seafile-data:/shared
-      - ${SEAFILE_DIR}:/shared
+      - seafile-data:/shared
     tmpfs:
       - /opt/seafile/pids
     depends_on:
@@ -209,6 +206,6 @@ networks:
   seafile:
     driver: bridge
 
-# volumes:
-#   seafile-data:
-#   mariadb-data:
+volumes:
+  seafile-data:
+  mariadb-data:
