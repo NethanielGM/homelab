@@ -95,7 +95,7 @@ services:
     image: qmcgaw/gluetun
     container_name: gluetun
     cpus: 0.5
-    mem_limit: 512m
+    mem_limit: 1g
     cap_add:
       - NET_ADMIN
     devices:
@@ -118,8 +118,8 @@ services:
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent
     container_name: qbittorrent
-    cpus: 0.5
-    mem_limit: 512m
+    cpus: 1
+    mem_limit: 1g
     network_mode: "service:gluetun"
     depends_on:
       - gluetun
@@ -136,9 +136,8 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
-    cpus: 0.5
-    mem_limit: 512m
-    restart: unless-stopped
+    cpus: 0.25
+    mem_limit: 256m
     depends_on:
       - jellyfin
       - sonarr
@@ -153,12 +152,12 @@ services:
     networks:
       - default
       - seafile
+    restart: unless-stopped
 
   jellyfin:
     image: jellyfin/jellyfin
     container_name: jellyfin
-    cpus: 0.5
-    mem_limit: 512m
+    runtime: nvidia
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -175,12 +174,19 @@ services:
       - music-data:/media/music
       - home-data:/media/seafile:ro
     restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   mariadb:
     image: mariadb:10.11
     container_name: mariadb
-    cpus: 0.5
-    mem_limit: 512m
+    cpus: 1
+    mem_limit: 1g
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     volumes:
@@ -192,8 +198,8 @@ services:
   memcached:
     image: memcached:1.6-alpine
     container_name: seafile-memcached
-    cpus: 0.5
-    mem_limit: 128m
+    cpus: 0.25
+    mem_limit: 256m
     entrypoint: memcached -m 256
     networks:
       - seafile
@@ -202,8 +208,8 @@ services:
   seafile:
     image: seafileltd/seafile-mc:11.0-latest
     container_name: seafile
-    cpus: 0.5
-    mem_limit: 512m
+    cpus: 1
+    mem_limit: 1g
     expose:
       - "80"
     environment:
@@ -234,17 +240,11 @@ networks:
 
 volumes:
   shows-data:
-    driver: local
   movies-data:
-    driver: local
   music-data:
-    driver: local
   downloads-data:
-    driver: local
   seafile-data:
-    driver: local
   mariadb-data:
-    driver: local
   home-data:
     driver: local
     driver_opts:
