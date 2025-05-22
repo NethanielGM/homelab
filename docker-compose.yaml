@@ -173,7 +173,7 @@ services:
       - shows-data:/media/shows
       - movies-data:/media/movies
       - music-data:/media/music
-      - seafile-media:/media/seafile:ro
+      - home-data:/media/seafile:ro
     restart: unless-stopped
 
   mariadb:
@@ -241,9 +241,13 @@ volumes:
     driver: local
   downloads-data:
     driver: local
-  seafile-media:
-    driver: local
   seafile-data:
     driver: local
   mariadb-data:
     driver: local
+  home-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "D:/SeaDriveCache/nethanie/My Libraries/Media"
