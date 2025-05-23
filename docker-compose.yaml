@@ -3,7 +3,7 @@ services:
     image: linuxserver/sonarr
     container_name: sonarr
     cpus: 0.5
-    mem_limit: 512m
+    mem_limit: 512m    
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -20,7 +20,7 @@ services:
     image: linuxserver/radarr
     container_name: radarr
     cpus: 0.5
-    mem_limit: 512m
+    mem_limit: 512m    
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -37,7 +37,7 @@ services:
     image: linuxserver/lidarr
     container_name: lidarr
     cpus: 0.5
-    mem_limit: 512m
+    mem_limit: 512m    
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -54,7 +54,7 @@ services:
     image: lscr.io/linuxserver/prowlarr
     container_name: prowlarr
     cpus: 0.5
-    mem_limit: 512m
+    mem_limit: 512m    
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -69,7 +69,7 @@ services:
     image: fallenbagel/jellyseerr:latest
     container_name: jellyseerr
     cpus: 0.5
-    mem_limit: 512m
+    mem_limit: 512m    
     environment:
       - LOG_LEVEL=info
       - TZ=${TZ}
@@ -83,7 +83,7 @@ services:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     container_name: flaresolverr
     cpus: 0.5
-    mem_limit: 512m
+    mem_limit: 512m    
     environment:
       - LOG_LEVEL=info
       - TZ=${TZ}
@@ -95,7 +95,7 @@ services:
     image: qmcgaw/gluetun
     container_name: gluetun
     cpus: 0.5
-    mem_limit: 1g
+    mem_limit: 1g    
     cap_add:
       - NET_ADMIN
     devices:
@@ -119,7 +119,7 @@ services:
     image: lscr.io/linuxserver/qbittorrent
     container_name: qbittorrent
     cpus: 1
-    mem_limit: 1g
+    mem_limit: 1g    
     network_mode: "service:gluetun"
     depends_on:
       - gluetun
@@ -137,7 +137,7 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
     cpus: 0.25
-    mem_limit: 256m
+    mem_limit: 256m    
     depends_on:
       - jellyfin
       - sonarr
@@ -153,10 +153,12 @@ services:
       - default
       - seafile
     restart: unless-stopped
-
+   
   jellyfin:
     image: jellyfin/jellyfin
     container_name: jellyfin
+    cpus: 2
+    mem_limit: 4g
     runtime: nvidia
     environment:
       - PUID=${PUID}
@@ -172,7 +174,6 @@ services:
       - shows-data:/media/shows
       - movies-data:/media/movies
       - music-data:/media/music
-      - home-data:/media/seafile:ro
     restart: unless-stopped
     deploy:
       resources:
@@ -180,13 +181,13 @@ services:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]
+              capabilities: [gpu]        
 
   mariadb:
     image: mariadb:10.11
     container_name: mariadb
     cpus: 1
-    mem_limit: 1g
+    mem_limit: 1g    
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     volumes:
@@ -199,7 +200,7 @@ services:
     image: memcached:1.6-alpine
     container_name: seafile-memcached
     cpus: 0.25
-    mem_limit: 256m
+    mem_limit: 256m    
     entrypoint: memcached -m 256
     networks:
       - seafile
@@ -209,7 +210,7 @@ services:
     image: seafileltd/seafile-mc:11.0-latest
     container_name: seafile
     cpus: 1
-    mem_limit: 1g
+    mem_limit: 1g    
     expose:
       - "80"
     environment:
@@ -245,9 +246,3 @@ volumes:
   downloads-data:
   seafile-data:
   mariadb-data:
-  home-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: "D:/SeaDriveCache/nethanie/My Libraries/Media"
