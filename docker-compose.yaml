@@ -10,8 +10,8 @@ services:
       - TZ=${TZ}
     volumes:
       - ${CONFIG_DIR}/sonarr:/config
-      - shows-data:/shows
-      - downloads-data:/downloads
+      - ${SHOWS_DIR}:/shows
+      - ${DOWNLOADS_DIR}:/downloads
     ports:
       - "8989:8989"
     restart: unless-stopped
@@ -27,8 +27,8 @@ services:
       - TZ=${TZ}
     volumes:
       - ${CONFIG_DIR}/radarr:/config
-      - movies-data:/movies
-      - downloads-data:/downloads
+      - ${MOVIES_DIR}:/movies
+      - ${DOWNLOADS_DIR}:/downloads
     ports:
       - "7878:7878"
     restart: unless-stopped
@@ -44,8 +44,8 @@ services:
       - TZ=${TZ}
     volumes:
       - ${CONFIG_DIR}/lidarr:/config
-      - music-data:/music
-      - downloads-data:/downloads
+      - ${MUSIC_DIR}:/music
+      - ${DOWNLOADS_DIR}:/downloads
     ports:
       - "8686:8686"
     restart: unless-stopped
@@ -130,7 +130,7 @@ services:
       - WEBUI_PORT=8880
     volumes:
       - ${CONFIG_DIR}/qbittorrent:/config
-      - downloads-data:/downloads
+      - ${DOWNLOADS_DIR}:/downloads
     restart: unless-stopped
 
   cloudflared:
@@ -139,7 +139,7 @@ services:
     cpus: 0.25
     mem_limit: 256m    
     depends_on:
-      - jellyfin
+      - emby
       - sonarr
       - radarr
       - lidarr
@@ -153,10 +153,10 @@ services:
       - default
       - seafile
     restart: unless-stopped
-   
-  jellyfin:
-    image: jellyfin/jellyfin
-    container_name: jellyfin
+
+  emby:
+    image: emby/embyserver:latest
+    container_name: emby
     cpus: 2
     mem_limit: 4g
     runtime: nvidia
@@ -166,14 +166,13 @@ services:
       - TZ=${TZ}
     ports:
       - "8096:8096"
-      - "8920:8920"
-      - "7359:7359/udp"
-      - "1900:1900/udp"
+      - "8920:8920"      
     volumes:
-      - ${CONFIG_DIR}/jellyfin:/config
-      - shows-data:/media/shows
-      - movies-data:/media/movies
-      - music-data:/media/music
+      - ${CONFIG_DIR}/emby/config:/config
+      - ${CONFIG_DIR}/emby/logs:/logs
+      - ${SHOWS_DIR}:/media/shows
+      - ${MOVIES_DIR}:/media/movies
+      - ${MUSIC_DIR}:/media/music   
     restart: unless-stopped
     deploy:
       resources:
@@ -181,7 +180,7 @@ services:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]        
+              capabilities: [gpu]
 
   mariadb:
     image: mariadb:10.11
@@ -240,9 +239,5 @@ networks:
     driver: bridge
 
 volumes:
-  shows-data:
-  movies-data:
-  music-data:
-  downloads-data:
   seafile-data:
   mariadb-data:
