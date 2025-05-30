@@ -177,6 +177,7 @@ services:
       - ${SHOWS_DIR}:/media/shows
       - ${MOVIES_DIR}:/media/movies
       - ${MUSIC_DIR}:/media/music
+      - ${UPLOAD_LOCATION}/upload:/media/immich
     ports:
       - "8096:8096"
       - "8920:8920"
@@ -234,6 +235,8 @@ services:
 
   postgres:
     container_name: immich_postgres
+    cpus: 1
+    mem_limit: 1g    
     image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0@sha256:fa4f6e0971f454cd95fec5a9aaed2ed93d8f46725cc6bc61e0698e97dba96da1
     environment:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -251,6 +254,8 @@ services:
 
   redis:
     container_name: immich_redis
+    cpus: 0.25
+    mem_limit: 256m    
     image: docker.io/valkey/valkey:8-bookworm@sha256:ff21bc0f8194dc9c105b769aeabf9585fea6a8ed649c0781caeac5cb3c247884
     healthcheck:
       test: redis-cli ping || exit 1
@@ -274,6 +279,8 @@ services:
 
   immich-server:
     container_name: immich_server
+    cpus: 2
+    mem_limit: 4g  
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
     # extends:
     #   file: hwaccel.transcoding.yml
