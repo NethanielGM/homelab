@@ -2,8 +2,8 @@ services:
   sonarr:
     image: linuxserver/sonarr
     container_name: sonarr
-    cpus: 0.5
-    mem_limit: 512m
+    cpus: 0.25
+    mem_limit: 256m
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -19,8 +19,8 @@ services:
   radarr:
     image: linuxserver/radarr
     container_name: radarr
-    cpus: 0.5
-    mem_limit: 512m
+    cpus: 0.25
+    mem_limit: 256m
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -36,8 +36,8 @@ services:
   lidarr:
     image: linuxserver/lidarr
     container_name: lidarr
-    cpus: 0.5
-    mem_limit: 512m
+    cpus: 0.25
+    mem_limit: 256m
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -53,8 +53,8 @@ services:
   prowlarr:
     image: lscr.io/linuxserver/prowlarr
     container_name: prowlarr
-    cpus: 0.5
-    mem_limit: 512m
+    cpus: 0.25
+    mem_limit: 256m
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -68,8 +68,8 @@ services:
   jellyseerr:
     image: fallenbagel/jellyseerr:latest
     container_name: jellyseerr
-    cpus: 0.5
-    mem_limit: 512m
+    cpus: 0.25
+    mem_limit: 256m
     environment:
       - LOG_LEVEL=info
       - TZ=${TZ}
@@ -82,8 +82,8 @@ services:
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     container_name: flaresolverr
-    cpus: 0.5
-    mem_limit: 512m
+    cpus: 0.25
+    mem_limit: 256m
     environment:
       - LOG_LEVEL=info
       - TZ=${TZ}
@@ -94,33 +94,32 @@ services:
   gluetun:
     image: qmcgaw/gluetun
     container_name: gluetun
-    cpus: 0.5
-    mem_limit: 1g
+    cpus: 0.25
+    mem_limit: 512m
     cap_add:
       - NET_ADMIN
     devices:
       - /dev/net/tun
     environment:
-      - VPN_SERVICE_PROVIDER=nordvpn
-      - OPENVPN_USER=${NORD_USER}
       - OPENVPN_PASSWORD=${NORD_PASS}
+      - OPENVPN_USER=${NORD_USER}
       - SERVER_CATEGORIES=p2p
       - SERVER_COUNTRIES=${VPN_COUNTRY}
       - TZ=${TZ}
+      - VPN_SERVICE_PROVIDER=nordvpn
     volumes:
       - ${CONFIG_DIR}/gluetun:/gluetun
     ports:
-      - "8880:8880"
       - "6881:6881/tcp"
       - "6881:6881/udp"
+      - "8880:8880"
     restart: unless-stopped
 
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent
     container_name: qbittorrent
-    cpus: 1
-    mem_limit: 1g
-    network_mode: "service:gluetun"
+    cpus: 0.5
+    mem_limit: 512m
     depends_on:
       - gluetun
     environment:
@@ -128,6 +127,7 @@ services:
       - PGID=${PGID}
       - TZ=${TZ}
       - WEBUI_PORT=8880
+    network_mode: "service:gluetun"
     volumes:
       - ${CONFIG_DIR}/qbittorrent:/config
       - ${DOWNLOADS_DIR}:/downloads
@@ -136,16 +136,16 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
-    cpus: 0.25
-    mem_limit: 256m
+    cpus: 0.125
+    mem_limit: 128m
     depends_on:
-      - emby
       - sonarr
       - radarr
       - lidarr
       - prowlarr
       - jellyseerr
       - qbittorrent
+      - emby
     volumes:
       - ${CONFIG_DIR}/cloudflared:/etc/cloudflared:ro
     command: tunnel run
@@ -157,8 +157,8 @@ services:
   emby:
     image: emby/embyserver:latest
     container_name: emby
-    cpus: 2
-    mem_limit: 4g
+    cpus: 1
+    mem_limit: 2g
     runtime: nvidia
     deploy:
       resources:
@@ -166,7 +166,7 @@ services:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]
+              capabilities: [gpu]    
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -186,8 +186,8 @@ services:
   mariadb:
     image: mariadb:10.11
     container_name: mariadb
-    cpus: 1
-    mem_limit: 1g
+    cpus: 0.5
+    mem_limit: 512m
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     volumes:
@@ -199,9 +199,9 @@ services:
   memcached:
     image: memcached:1.6-alpine
     container_name: seafile-memcached
-    cpus: 0.25
-    mem_limit: 256m
-    entrypoint: memcached -m 256
+    cpus: 0.125
+    mem_limit: 128m
+    entrypoint: memcached -m 128
     networks:
       - seafile
     restart: unless-stopped
@@ -209,23 +209,23 @@ services:
   seafile:
     image: seafileltd/seafile-mc:11.0-latest
     container_name: seafile
-    cpus: 1
-    mem_limit: 1g
+    cpus: 0.5
+    mem_limit: 512m
     expose:
       - "80"
     environment:
       - DB_HOST=mariadb
       - DB_ROOT_PASSWD=${MYSQL_ROOT_PASSWORD}
-      - TIME_ZONE=${TZ}
+      - SERVICE_URL=https://seafile.${SERVER_HOSTNAME}
       - SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
       - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
-      - SEAFILE_SERVER_LETSENCRYPT=${SEAFILE_SERVER_LETSENCRYPT}
       - SEAFILE_SERVER_HOSTNAME=seafile.${SERVER_HOSTNAME}
-      - SERVICE_URL=https://seafile.${SERVER_HOSTNAME}
-    volumes:
-      - seafile-data:/shared
+      - SEAFILE_SERVER_LETSENCRYPT=${SEAFILE_SERVER_LETSENCRYPT}
+      - TIME_ZONE=${TZ}
     tmpfs:
       - /opt/seafile/pids
+    volumes:
+      - seafile-data:/shared
     depends_on:
       - mariadb
       - memcached
@@ -234,65 +234,58 @@ services:
     restart: unless-stopped
 
   postgres:
-    container_name: immich_postgres
-    cpus: 1
-    mem_limit: 1g    
     image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0@sha256:fa4f6e0971f454cd95fec5a9aaed2ed93d8f46725cc6bc61e0698e97dba96da1
+    container_name: postgres
+    cpus: 0.5
+    mem_limit: 512m
     environment:
+      - DB_STORAGE_TYPE=HDD
+      - POSTGRES_DB=${DB_DATABASE_NAME}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_USER=${DB_USERNAME}
-      - POSTGRES_DB=${DB_DATABASE_NAME}
       - POSTGRES_INITDB_ARGS=--data-checksums
-      - DB_STORAGE_TYPE=HDD
     volumes:
       - immich-postgres-data:/var/lib/postgresql/data
-    restart: always
     networks:
       default:
         aliases:
           - database
+    restart: always
 
   redis:
-    container_name: immich_redis
-    cpus: 0.25
-    mem_limit: 256m    
     image: docker.io/valkey/valkey:8-bookworm@sha256:ff21bc0f8194dc9c105b769aeabf9585fea6a8ed649c0781caeac5cb3c247884
+    container_name: redis
+    cpus: 0.125
+    mem_limit: 128m
     healthcheck:
-      test: redis-cli ping || exit 1
+      test: ["CMD", "redis-cli", "ping"]
     restart: always
 
   immich-machine-learning:
-    container_name: immich_machine_learning
-    # For hardware acceleration, add one of -[armnn, cuda, rocm, openvino, rknn] to the image tag.
-    # Example tag: ${IMMICH_VERSION:-release}-cuda
     image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
-    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/ml-hardware-acceleration
-    #   file: hwaccel.ml.yml
-    #   service: cpu # set to one of [armnn, cuda, rocm, openvino, openvino-wsl, rknn] for accelerated inference - use the `-wsl` version for WSL2 where applicable
-    volumes:
-      - immich-redis-data:/cache
+    container_name: immich_machine_learning
+    cpus: 1
+    mem_limit: 512m
     env_file:
       - .env
+    volumes:
+      - immich-redis-data:/cache
     restart: always
     healthcheck:
       disable: false
 
   immich-server:
-    container_name: immich_server
-    cpus: 2
-    mem_limit: 4g  
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
-    # extends:
-    #   file: hwaccel.transcoding.yml
-    #   service: cpu # set to one of [nvenc, quicksync, rkmpp, vaapi, vaapi-wsl] for accelerated transcoding
-    volumes:
-      # Do not edit the next line. If you want to change the media storage location on your system, edit the value of UPLOAD_LOCATION in the .env file
-      - ${UPLOAD_LOCATION}:/usr/src/app/upload
-      - /etc/localtime:/etc/localtime:ro
+    container_name: immich_server
+    cpus: 1
+    mem_limit: 2g
     env_file:
       - .env
+    volumes:
+      - ${UPLOAD_LOCATION}:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
     ports:
-      - '2283:2283'
+      - "2283:2283"
     depends_on:
       - redis
       - postgres
