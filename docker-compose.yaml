@@ -2,8 +2,8 @@ services:
   sonarr:
     image: linuxserver/sonarr
     container_name: sonarr
-    cpus: 0.25
-    mem_limit: 256m
+    cpus: 0.1
+    mem_limit: 512m
     environment:
       PUID: "${PUID}"
       PGID: "${PGID}"
@@ -24,8 +24,8 @@ services:
   radarr:
     image: linuxserver/radarr
     container_name: radarr
-    cpus: 0.25
-    mem_limit: 256m
+    cpus: 0.1
+    mem_limit: 512m
     environment:
       PUID: "${PUID}"
       PGID: "${PGID}"
@@ -46,7 +46,7 @@ services:
   lidarr:
     image: linuxserver/lidarr
     container_name: lidarr
-    cpus: 0.25
+    cpus: 0.1
     mem_limit: 256m
     environment:
       PUID: "${PUID}"
@@ -68,7 +68,7 @@ services:
   prowlarr:
     image: lscr.io/linuxserver/prowlarr
     container_name: prowlarr
-    cpus: 0.25
+    cpus: 0.1
     mem_limit: 256m
     environment:
       PUID: "${PUID}"
@@ -89,7 +89,7 @@ services:
     image: fallenbagel/jellyseerr:latest
     container_name: jellyseerr
     cpus: 0.25
-    mem_limit: 256m
+    mem_limit: 1g
     environment:
       LOG_LEVEL: "info"
       TZ: "${TZ}"
@@ -107,8 +107,8 @@ services:
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     container_name: flaresolverr
-    cpus: 0.25
-    mem_limit: 256m
+    cpus: 0.1
+    mem_limit: 512m
     environment:
       LOG_LEVEL: "info"
       TZ: "${TZ}"
@@ -124,7 +124,7 @@ services:
   gluetun:
     image: qmcgaw/gluetun
     container_name: gluetun
-    cpus: 0.5
+    cpus: 0.1
     mem_limit: 512m
     cap_add:
       - NET_ADMIN
@@ -153,8 +153,8 @@ services:
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent
     container_name: qbittorrent
-    cpus: 0.25
-    mem_limit: 256m
+    cpus: 0.1
+    mem_limit: 512m
     depends_on:
       - gluetun
     network_mode: service:gluetun
@@ -176,8 +176,8 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
-    cpus: 0.125
-    mem_limit: 128m
+    cpus: 0.1
+    mem_limit: 100m
     depends_on:
       - sonarr
       - radarr
@@ -201,8 +201,8 @@ services:
   emby:
     image: emby/embyserver:latest
     container_name: emby
-    cpus: 2
-    mem_limit: 4g
+    cpus: 3
+    mem_limit: 2g
     runtime: nvidia
     deploy:
       resources:
@@ -235,8 +235,8 @@ services:
   postgres:
     image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0
     container_name: postgres
-    cpus: 0.5
-    mem_limit: 512m
+    cpus: 0.1
+    mem_limit: 256m
     environment:
       DB_STORAGE_TYPE: HDD
       POSTGRES_DB: "${DB_DATABASE_NAME}"
@@ -259,8 +259,8 @@ services:
   redis:
     image: docker.io/valkey/valkey:8-bookworm
     container_name: redis
-    cpus: 0.125
-    mem_limit: 128m
+    cpus: 0.1
+    mem_limit: 50m
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
     restart: always
@@ -273,8 +273,16 @@ services:
   immich-machine-learning:
     image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
     container_name: immich_machine_learning
-    cpus: 1
-    mem_limit: 1g
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    cpus: 0.1
+    mem_limit: 512m
     env_file:
       - .env
     volumes:
@@ -291,8 +299,8 @@ services:
   immich-server:
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
     container_name: immich_server
-    cpus: 2
-    mem_limit: 4g
+    runtime: nvidia
+    mem_limit: 1g
     env_file:
       - .env
     volumes:
@@ -315,8 +323,8 @@ services:
   dozzle:
     image: amir20/dozzle:latest
     container_name: dozzle
-    cpus: 0.25
-    mem_limit: 256m
+    cpus: 0.1
+    mem_limit: 100m
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - "${CONFIG_DIR}/dozzle:/data"
