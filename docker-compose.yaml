@@ -293,6 +293,17 @@ services:
     healthcheck:
       disable: false
 
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${CONFIG_DIR}/dozzle:/data
+    environment:
+      - DOZZLE_AUTH_PROVIDER=simple
+    expose:
+      - "8080"
+
 networks:
   default:
     driver: bridge
