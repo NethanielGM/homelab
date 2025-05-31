@@ -5,16 +5,21 @@ services:
     cpus: 0.25
     mem_limit: 256m
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
+      PUID: "${PUID}"
+      PGID: "${PGID}"
+      TZ: "${TZ}"
     volumes:
-      - ${CONFIG_DIR}/sonarr:/config
-      - ${SHOWS_DIR}:/shows
-      - ${DOWNLOADS_DIR}:/downloads
+      - "${CONFIG_DIR}/sonarr:/config"
+      - "${SHOWS_DIR}:/shows"
+      - "${DOWNLOADS_DIR}:/downloads"
     ports:
       - "8989:8989"
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   radarr:
     image: linuxserver/radarr
@@ -22,16 +27,21 @@ services:
     cpus: 0.25
     mem_limit: 256m
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
+      PUID: "${PUID}"
+      PGID: "${PGID}"
+      TZ: "${TZ}"
     volumes:
-      - ${CONFIG_DIR}/radarr:/config
-      - ${MOVIES_DIR}:/movies
-      - ${DOWNLOADS_DIR}:/downloads
+      - "${CONFIG_DIR}/radarr:/config"
+      - "${MOVIES_DIR}:/movies"
+      - "${DOWNLOADS_DIR}:/downloads"
     ports:
       - "7878:7878"
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   lidarr:
     image: linuxserver/lidarr
@@ -39,16 +49,21 @@ services:
     cpus: 0.25
     mem_limit: 256m
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
+      PUID: "${PUID}"
+      PGID: "${PGID}"
+      TZ: "${TZ}"
     volumes:
-      - ${CONFIG_DIR}/lidarr:/config
-      - ${MUSIC_DIR}:/music
-      - ${DOWNLOADS_DIR}:/downloads
+      - "${CONFIG_DIR}/lidarr:/config"
+      - "${MUSIC_DIR}:/music"
+      - "${DOWNLOADS_DIR}:/downloads"
     ports:
       - "8686:8686"
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr
@@ -56,14 +71,19 @@ services:
     cpus: 0.25
     mem_limit: 256m
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
+      PUID: "${PUID}"
+      PGID: "${PGID}"
+      TZ: "${TZ}"
     volumes:
-      - ${CONFIG_DIR}/prowlarr:/config
+      - "${CONFIG_DIR}/prowlarr:/config"
     ports:
       - "9696:9696"
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   jellyseerr:
     image: fallenbagel/jellyseerr:latest
@@ -71,13 +91,18 @@ services:
     cpus: 0.25
     mem_limit: 256m
     environment:
-      - LOG_LEVEL=info
-      - TZ=${TZ}
+      LOG_LEVEL: "info"
+      TZ: "${TZ}"
     volumes:
-      - ${CONFIG_DIR}/jellyseerr:/app/config
+      - "${CONFIG_DIR}/jellyseerr:/app/config"
     ports:
       - "5055:5055"
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
@@ -85,53 +110,68 @@ services:
     cpus: 0.25
     mem_limit: 256m
     environment:
-      - LOG_LEVEL=info
-      - TZ=${TZ}
+      LOG_LEVEL: "info"
+      TZ: "${TZ}"
     ports:
       - "8191:8191"
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   gluetun:
     image: qmcgaw/gluetun
     container_name: gluetun
-    cpus: 0.25
+    cpus: 0.5
     mem_limit: 512m
     cap_add:
       - NET_ADMIN
     devices:
       - /dev/net/tun
     environment:
-      - OPENVPN_PASSWORD=${NORD_PASS}
-      - OPENVPN_USER=${NORD_USER}
-      - SERVER_CATEGORIES=p2p
-      - SERVER_COUNTRIES=${VPN_COUNTRY}
-      - TZ=${TZ}
-      - VPN_SERVICE_PROVIDER=nordvpn
+      OPENVPN_USER: "${NORD_USER}"
+      OPENVPN_PASSWORD: "${NORD_PASS}"
+      SERVER_CATEGORIES: p2p
+      SERVER_COUNTRIES: "${VPN_COUNTRY}"
+      TZ: "${TZ}"
+      VPN_SERVICE_PROVIDER: nordvpn
     volumes:
-      - ${CONFIG_DIR}/gluetun:/gluetun
+      - "${CONFIG_DIR}/gluetun:/gluetun"
     ports:
       - "6881:6881/tcp"
       - "6881:6881/udp"
       - "8880:8880"
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent
     container_name: qbittorrent
-    cpus: 0.5
-    mem_limit: 512m
+    cpus: 0.25
+    mem_limit: 256m
     depends_on:
       - gluetun
+    network_mode: service:gluetun
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-      - WEBUI_PORT=8880
-    network_mode: "service:gluetun"
+      PUID: "${PUID}"
+      PGID: "${PGID}"
+      TZ: "${TZ}"
+      WEBUI_PORT: 8880
     volumes:
-      - ${CONFIG_DIR}/qbittorrent:/config
-      - ${DOWNLOADS_DIR}:/downloads
+      - "${CONFIG_DIR}/qbittorrent:/config"
+      - "${DOWNLOADS_DIR}:/downloads"
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   cloudflared:
     image: cloudflare/cloudflared:latest
@@ -147,18 +187,22 @@ services:
       - qbittorrent
       - emby
     volumes:
-      - ${CONFIG_DIR}/cloudflared:/etc/cloudflared:ro
+      - "${CONFIG_DIR}/cloudflared:/etc/cloudflared:ro"
     command: tunnel run
     networks:
       - default
-      - seafile
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   emby:
     image: emby/embyserver:latest
     container_name: emby
-    cpus: 1
-    mem_limit: 2g
+    cpus: 2
+    mem_limit: 4g
     runtime: nvidia
     deploy:
       resources:
@@ -166,84 +210,39 @@ services:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]    
+              capabilities: [gpu]
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
+      PUID: "${PUID}"
+      PGID: "${PGID}"
+      TZ: "${TZ}"
     volumes:
-      - ${CONFIG_DIR}/emby/config:/config
-      - ${CONFIG_DIR}/emby/logs:/logs
-      - ${SHOWS_DIR}:/media/shows
-      - ${MOVIES_DIR}:/media/movies
-      - ${MUSIC_DIR}:/media/music
-      - ${UPLOAD_LOCATION}/upload:/media/immich
+      - "${CONFIG_DIR}/emby/config:/config"
+      - "${CONFIG_DIR}/emby/logs:/logs"
+      - "${SHOWS_DIR}:/media/shows"
+      - "${MOVIES_DIR}:/media/movies"
+      - "${MUSIC_DIR}:/media/music"
+      - "${UPLOAD_LOCATION}/upload:/media/immich"
     ports:
       - "8096:8096"
       - "8920:8920"
     restart: unless-stopped
-
-  mariadb:
-    image: mariadb:10.11
-    container_name: mariadb
-    cpus: 0.5
-    mem_limit: 512m
-    environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-    volumes:
-      - mariadb-data:/var/lib/mysql
-    networks:
-      - seafile
-    restart: unless-stopped
-
-  memcached:
-    image: memcached:1.6-alpine
-    container_name: seafile-memcached
-    cpus: 0.125
-    mem_limit: 128m
-    entrypoint: memcached -m 128
-    networks:
-      - seafile
-    restart: unless-stopped
-
-  seafile:
-    image: seafileltd/seafile-mc:11.0-latest
-    container_name: seafile
-    cpus: 0.5
-    mem_limit: 512m
-    expose:
-      - "80"
-    environment:
-      - DB_HOST=mariadb
-      - DB_ROOT_PASSWD=${MYSQL_ROOT_PASSWORD}
-      - SERVICE_URL=https://seafile.${SERVER_HOSTNAME}
-      - SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
-      - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
-      - SEAFILE_SERVER_HOSTNAME=seafile.${SERVER_HOSTNAME}
-      - SEAFILE_SERVER_LETSENCRYPT=${SEAFILE_SERVER_LETSENCRYPT}
-      - TIME_ZONE=${TZ}
-    tmpfs:
-      - /opt/seafile/pids
-    volumes:
-      - seafile-data:/shared
-    depends_on:
-      - mariadb
-      - memcached
-    networks:
-      - seafile
-    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
 
   postgres:
-    image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0@sha256:fa4f6e0971f454cd95fec5a9aaed2ed93d8f46725cc6bc61e0698e97dba96da1
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0
     container_name: postgres
     cpus: 0.5
     mem_limit: 512m
     environment:
-      - DB_STORAGE_TYPE=HDD
-      - POSTGRES_DB=${DB_DATABASE_NAME}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_USER=${DB_USERNAME}
-      - POSTGRES_INITDB_ARGS=--data-checksums
+      DB_STORAGE_TYPE: HDD
+      POSTGRES_DB: "${DB_DATABASE_NAME}"
+      POSTGRES_USER: "${DB_USERNAME}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_INITDB_ARGS: --data-checksums
     volumes:
       - immich-postgres-data:/var/lib/postgresql/data
     networks:
@@ -251,21 +250,31 @@ services:
         aliases:
           - database
     restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
 
   redis:
-    image: docker.io/valkey/valkey:8-bookworm@sha256:ff21bc0f8194dc9c105b769aeabf9585fea6a8ed649c0781caeac5cb3c247884
+    image: docker.io/valkey/valkey:8-bookworm
     container_name: redis
     cpus: 0.125
     mem_limit: 128m
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
     restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   immich-machine-learning:
     image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
     container_name: immich_machine_learning
     cpus: 1
-    mem_limit: 512m
+    mem_limit: 1g
     env_file:
       - .env
     volumes:
@@ -273,16 +282,21 @@ services:
     restart: always
     healthcheck:
       disable: false
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
 
   immich-server:
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
     container_name: immich_server
-    cpus: 1
-    mem_limit: 2g
+    cpus: 2
+    mem_limit: 4g
     env_file:
       - .env
     volumes:
-      - ${UPLOAD_LOCATION}:/usr/src/app/upload
+      - "${UPLOAD_LOCATION}:/usr/src/app/upload"
       - /etc/localtime:/etc/localtime:ro
     ports:
       - "2283:2283"
@@ -292,26 +306,35 @@ services:
     restart: always
     healthcheck:
       disable: false
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
 
   dozzle:
     image: amir20/dozzle:latest
     container_name: dozzle
+    cpus: 0.25
+    mem_limit: 256m
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ${CONFIG_DIR}/dozzle:/data
+      - "${CONFIG_DIR}/dozzle:/data"
     environment:
-      - DOZZLE_AUTH_PROVIDER=simple
+      DOZZLE_AUTH_PROVIDER: simple
     expose:
       - "8080"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
   default:
     driver: bridge
-  seafile:
-    driver: bridge
 
 volumes:
-  seafile-data:
-  mariadb-data:
   immich-redis-data:
   immich-postgres-data:
