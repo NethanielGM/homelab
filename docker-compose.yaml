@@ -47,7 +47,7 @@ services:
     image: linuxserver/lidarr
     container_name: lidarr
     cpus: 0.1
-    mem_limit: 256m
+    mem_limit: 512m
     environment:
       PUID: "${PUID}"
       PGID: "${PGID}"
@@ -69,7 +69,7 @@ services:
     image: lscr.io/linuxserver/prowlarr
     container_name: prowlarr
     cpus: 0.1
-    mem_limit: 256m
+    mem_limit: 512m
     environment:
       PUID: "${PUID}"
       PGID: "${PGID}"
@@ -108,7 +108,7 @@ services:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     container_name: flaresolverr
     cpus: 0.1
-    mem_limit: 512m
+    mem_limit: 256m
     environment:
       LOG_LEVEL: "info"
       TZ: "${TZ}"
@@ -153,8 +153,8 @@ services:
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent
     container_name: qbittorrent
-    cpus: 0.1
-    mem_limit: 512m
+    cpus: 0.5
+    mem_limit: 1g
     depends_on:
       - gluetun
     network_mode: service:gluetun
@@ -177,7 +177,7 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
     cpus: 0.1
-    mem_limit: 100m
+    mem_limit: 256m
     depends_on:
       - sonarr
       - radarr
@@ -201,8 +201,8 @@ services:
   emby:
     image: emby/embyserver:latest
     container_name: emby
-    cpus: 3
-    mem_limit: 2g
+    cpus: 0.5
+    mem_limit: 1g
     runtime: nvidia
     deploy:
       resources:
@@ -236,7 +236,7 @@ services:
     image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0
     container_name: postgres
     cpus: 0.1
-    mem_limit: 256m
+    mem_limit: 512m
     environment:
       DB_STORAGE_TYPE: HDD
       POSTGRES_DB: "${DB_DATABASE_NAME}"
@@ -282,7 +282,7 @@ services:
               count: all
               capabilities: [gpu]
     cpus: 0.1
-    mem_limit: 512m
+    mem_limit: 1g
     env_file:
       - .env
     volumes:
@@ -300,6 +300,7 @@ services:
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
     container_name: immich_server
     runtime: nvidia
+    cpus: 1
     mem_limit: 1g
     env_file:
       - .env
@@ -324,7 +325,7 @@ services:
     image: amir20/dozzle:latest
     container_name: dozzle
     cpus: 0.1
-    mem_limit: 100m
+    mem_limit: 256m
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - "${CONFIG_DIR}/dozzle:/data"
