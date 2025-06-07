@@ -7,7 +7,7 @@ services:
     environment:
       PUID: "${PUID}"
       PGID: "${PGID}"
-      TZ: "${TZ}"
+      TZ:   "${TZ}"
     volumes:
       - "${CONFIG_DIR}/sonarr:/config:cached"
       - "${SHOWS_DIR}:/shows:cached"
@@ -29,7 +29,7 @@ services:
     environment:
       PUID: "${PUID}"
       PGID: "${PGID}"
-      TZ: "${TZ}"
+      TZ:   "${TZ}"
     volumes:
       - "${CONFIG_DIR}/radarr:/config:cached"
       - "${MOVIES_DIR}:/movies:cached"
@@ -51,7 +51,7 @@ services:
     environment:
       PUID: "${PUID}"
       PGID: "${PGID}"
-      TZ: "${TZ}"
+      TZ:   "${TZ}"
     volumes:
       - "${CONFIG_DIR}/lidarr:/config:cached"
       - "${MUSIC_DIR}:/music:cached"
@@ -73,30 +73,11 @@ services:
     environment:
       PUID: "${PUID}"
       PGID: "${PGID}"
-      TZ: "${TZ}"
+      TZ:   "${TZ}"
     volumes:
       - "${CONFIG_DIR}/prowlarr:/config:cached"
     ports:
       - "9696:9696"
-    restart: unless-stopped
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  jellyseerr:
-    image: fallenbagel/jellyseerr:latest
-    container_name: jellyseerr
-    cpus: 0.5
-    mem_limit: 1g
-    environment:
-      LOG_LEVEL: "info"
-      TZ: "${TZ}"
-    volumes:
-      - "${CONFIG_DIR}/jellyseerr:/app/config:cached"
-    ports:
-      - "5055:5055"
     restart: unless-stopped
     logging:
       driver: json-file
@@ -111,7 +92,7 @@ services:
     mem_limit: 512m
     environment:
       LOG_LEVEL: "info"
-      TZ: "${TZ}"
+      TZ:       "${TZ}"
     ports:
       - "8191:8191"
     restart: unless-stopped
@@ -124,18 +105,18 @@ services:
   gluetun:
     image: qmcgaw/gluetun
     container_name: gluetun
-    cpus: 0.5
-    mem_limit: 512m
     cap_add:
       - NET_ADMIN
     devices:
       - /dev/net/tun
+    cpus: 0.5
+    mem_limit: 512m
     environment:
-      OPENVPN_USER: "${NORD_USER}"
-      OPENVPN_PASSWORD: "${NORD_PASS}"
-      SERVER_CATEGORIES: p2p
-      SERVER_COUNTRIES: "${VPN_COUNTRY}"
-      TZ: "${TZ}"
+      OPENVPN_USER:       "${NORD_USER}"
+      OPENVPN_PASSWORD:   "${NORD_PASS}"
+      SERVER_CATEGORIES:  p2p
+      SERVER_COUNTRIES:   "${VPN_COUNTRY}"
+      TZ:                 "${TZ}"
       VPN_SERVICE_PROVIDER: nordvpn
     volumes:
       - "${CONFIG_DIR}/gluetun:/gluetun:cached"
@@ -153,15 +134,15 @@ services:
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent
     container_name: qbittorrent
-    cpus: 0.5
-    mem_limit: 1g
     depends_on:
       - gluetun
     network_mode: service:gluetun
+    cpus: 0.5
+    mem_limit: 2g
     environment:
-      PUID: "${PUID}"
-      PGID: "${PGID}"
-      TZ: "${TZ}"
+      PUID:       "${PUID}"
+      PGID:       "${PGID}"
+      TZ:         "${TZ}"
       WEBUI_PORT: 8880
     volumes:
       - "${CONFIG_DIR}/qbittorrent:/config:cached"
@@ -176,17 +157,17 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
-    cpus: 0.25
-    mem_limit: 512m
     depends_on:
+      - plex
       - sonarr
       - radarr
       - lidarr
       - prowlarr
-      - jellyseerr
-      - qbittorrent      
-      - emby
+      - overseerr
+      - qbittorrent
       - immich-server
+    cpus: 0.25
+    mem_limit: 512m
     volumes:
       - "${CONFIG_DIR}/cloudflared:/etc/cloudflared:ro"
     command: tunnel run
@@ -197,41 +178,7 @@ services:
       driver: json-file
       options:
         max-size: "10m"
-        max-file: "3"        
-
-  emby:
-    image: emby/embyserver:latest
-    container_name: emby
-    cpus: 3.0
-    mem_limit: 3g
-    runtime: nvidia
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    environment:
-      PUID: "${PUID}"
-      PGID: "${PGID}"
-      TZ: "${TZ}"
-    volumes:
-      - "${CONFIG_DIR}/emby/config:/config:cached"
-      - "${CONFIG_DIR}/emby/logs:/logs:cached"
-      - "${SHOWS_DIR}:/media/shows:cached"
-      - "${MOVIES_DIR}:/media/movies:cached"
-      - "${MUSIC_DIR}:/media/music:cached"
-      - "${IMMICH_DIR}/upload:/media/immich:cached"
-    ports:
-      - "8096:8096"
-      - "8920:8920"
-    restart: unless-stopped
-    logging:
-      driver: json-file
-      options:
-        max-size: "50m"
-        max-file: "5"
+        max-file: "3"
 
   postgres:
     image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0
@@ -239,10 +186,10 @@ services:
     cpus: 0.5
     mem_limit: 1g
     environment:
-      DB_STORAGE_TYPE: HDD
-      POSTGRES_DB: "${DB_DATABASE_NAME}"
-      POSTGRES_USER: "${DB_USERNAME}"
-      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      DB_STORAGE_TYPE:     HDD
+      POSTGRES_DB:         "${DB_DATABASE_NAME}"
+      POSTGRES_USER:       "${DB_USERNAME}"
+      POSTGRES_PASSWORD:   "${DB_PASSWORD}"
       POSTGRES_INITDB_ARGS: --data-checksums
     volumes:
       - immich-postgres-data:/var/lib/postgresql/data
@@ -345,12 +292,23 @@ services:
   plex:
     image: plexinc/pms-docker:latest
     container_name: plex
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    cpus: 3.0
+    mem_limit: 3g              
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Asia/Jerusalem
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=all
+      PUID:                       "${PUID}"
+      PGID:                       "${PGID}"
+      TZ:                         "${TZ}"
+      NVIDIA_VISIBLE_DEVICES:     "all"
+      NVIDIA_DRIVER_CAPABILITIES: "all"
+      PLEX_CLAIM:                 "${PLEX_CLAIM}"
     volumes:
       - "${CONFIG_DIR}/plex:/config"
       - "${SHOWS_DIR}:/data/tv"
@@ -367,44 +325,29 @@ services:
       - "32412:32412/udp"
       - "32413:32413/udp"
       - "32414:32414/udp"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    runtime: nvidia
     restart: unless-stopped
 
-  jellyfin:
-    image: jellyfin/jellyfin
-    container_name: jellyfin
-    user: uid:gid
-    network_mode: 'host'
-    volumes:
-      - /path/to/config:/config
-      - /path/to/cache:/cache
-      - type: bind
-        source: /path/to/media
-        target: /media
-      - type: bind
-        source: /path/to/media2
-        target: /media2
-        read_only: true
-      # Optional - extra fonts to be used during transcoding with subtitle burn-in
-      - type: bind
-        source: /path/to/fonts
-        target: /usr/local/share/fonts/custom
-        read_only: true
-    restart: 'unless-stopped'
-    # Optional - alternative address used for autodiscovery
+  overseerr:
+    image: lscr.io/linuxserver/overseerr:latest
+    container_name: overseerr
+    cpus: 0.5
+    mem_limit: 512m
     environment:
-      - JELLYFIN_PublishedServerUrl=http://example.com
-    # Optional - may be necessary for docker healthcheck to pass if running in host network mode
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-
+      PUID:      "${PUID}"
+      PGID:      "${PGID}"
+      TZ:        "${TZ}"
+      LOG_LEVEL: "info"
+    volumes:
+      - "${CONFIG_DIR}/overseerr:/config:cached"
+    ports:
+      - "5055:5055"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+  
 networks:
   default:
     driver: bridge
