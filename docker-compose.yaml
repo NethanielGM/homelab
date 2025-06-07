@@ -2,16 +2,16 @@ services:
   sonarr:
     image: linuxserver/sonarr
     container_name: sonarr
-    cpus: 0.1
+    cpus: 0.5
     mem_limit: 512m
     environment:
       PUID: "${PUID}"
       PGID: "${PGID}"
       TZ: "${TZ}"
     volumes:
-      - "${CONFIG_DIR}/sonarr:/config"
-      - "${SHOWS_DIR}:/shows"
-      - "${DOWNLOADS_DIR}:/downloads"
+      - "${CONFIG_DIR}/sonarr:/config:cached"
+      - "${SHOWS_DIR}:/shows:cached"
+      - "${DOWNLOADS_DIR}:/downloads:cached"
     ports:
       - "8989:8989"
     restart: unless-stopped
@@ -24,16 +24,16 @@ services:
   radarr:
     image: linuxserver/radarr
     container_name: radarr
-    cpus: 0.1
+    cpus: 0.5
     mem_limit: 512m
     environment:
       PUID: "${PUID}"
       PGID: "${PGID}"
       TZ: "${TZ}"
     volumes:
-      - "${CONFIG_DIR}/radarr:/config"
-      - "${MOVIES_DIR}:/movies"
-      - "${DOWNLOADS_DIR}:/downloads"
+      - "${CONFIG_DIR}/radarr:/config:cached"
+      - "${MOVIES_DIR}:/movies:cached"
+      - "${DOWNLOADS_DIR}:/downloads:cached"
     ports:
       - "7878:7878"
     restart: unless-stopped
@@ -46,16 +46,16 @@ services:
   lidarr:
     image: linuxserver/lidarr
     container_name: lidarr
-    cpus: 0.1
+    cpus: 0.5
     mem_limit: 512m
     environment:
       PUID: "${PUID}"
       PGID: "${PGID}"
       TZ: "${TZ}"
     volumes:
-      - "${CONFIG_DIR}/lidarr:/config"
-      - "${MUSIC_DIR}:/music"
-      - "${DOWNLOADS_DIR}:/downloads"
+      - "${CONFIG_DIR}/lidarr:/config:cached"
+      - "${MUSIC_DIR}:/music:cached"
+      - "${DOWNLOADS_DIR}:/downloads:cached"
     ports:
       - "8686:8686"
     restart: unless-stopped
@@ -68,14 +68,14 @@ services:
   prowlarr:
     image: lscr.io/linuxserver/prowlarr
     container_name: prowlarr
-    cpus: 0.1
+    cpus: 0.5
     mem_limit: 512m
     environment:
       PUID: "${PUID}"
       PGID: "${PGID}"
       TZ: "${TZ}"
     volumes:
-      - "${CONFIG_DIR}/prowlarr:/config"
+      - "${CONFIG_DIR}/prowlarr:/config:cached"
     ports:
       - "9696:9696"
     restart: unless-stopped
@@ -88,13 +88,13 @@ services:
   jellyseerr:
     image: fallenbagel/jellyseerr:latest
     container_name: jellyseerr
-    cpus: 0.25
+    cpus: 0.5
     mem_limit: 1g
     environment:
       LOG_LEVEL: "info"
       TZ: "${TZ}"
     volumes:
-      - "${CONFIG_DIR}/jellyseerr:/app/config"
+      - "${CONFIG_DIR}/jellyseerr:/app/config:cached"
     ports:
       - "5055:5055"
     restart: unless-stopped
@@ -107,8 +107,8 @@ services:
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     container_name: flaresolverr
-    cpus: 0.1
-    mem_limit: 256m
+    cpus: 0.5
+    mem_limit: 512m
     environment:
       LOG_LEVEL: "info"
       TZ: "${TZ}"
@@ -124,7 +124,7 @@ services:
   gluetun:
     image: qmcgaw/gluetun
     container_name: gluetun
-    cpus: 0.1
+    cpus: 0.5
     mem_limit: 512m
     cap_add:
       - NET_ADMIN
@@ -138,7 +138,7 @@ services:
       TZ: "${TZ}"
       VPN_SERVICE_PROVIDER: nordvpn
     volumes:
-      - "${CONFIG_DIR}/gluetun:/gluetun"
+      - "${CONFIG_DIR}/gluetun:/gluetun:cached"
     ports:
       - "6881:6881/tcp"
       - "6881:6881/udp"
@@ -164,8 +164,8 @@ services:
       TZ: "${TZ}"
       WEBUI_PORT: 8880
     volumes:
-      - "${CONFIG_DIR}/qbittorrent:/config"
-      - "${DOWNLOADS_DIR}:/downloads"
+      - "${CONFIG_DIR}/qbittorrent:/config:cached"
+      - "${DOWNLOADS_DIR}:/downloads:cached"
     restart: unless-stopped
     logging:
       driver: json-file
@@ -176,16 +176,17 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
-    cpus: 0.1
-    mem_limit: 256m
+    cpus: 0.25
+    mem_limit: 512m
     depends_on:
       - sonarr
       - radarr
       - lidarr
       - prowlarr
       - jellyseerr
-      - qbittorrent
+      - qbittorrent      
       - emby
+      - immich-server
     volumes:
       - "${CONFIG_DIR}/cloudflared:/etc/cloudflared:ro"
     command: tunnel run
@@ -196,13 +197,13 @@ services:
       driver: json-file
       options:
         max-size: "10m"
-        max-file: "3"
+        max-file: "3"        
 
   emby:
     image: emby/embyserver:latest
     container_name: emby
-    cpus: 0.5
-    mem_limit: 1g
+    cpus: 3.0
+    mem_limit: 3g
     runtime: nvidia
     deploy:
       resources:
@@ -216,12 +217,12 @@ services:
       PGID: "${PGID}"
       TZ: "${TZ}"
     volumes:
-      - "${CONFIG_DIR}/emby/config:/config"
-      - "${CONFIG_DIR}/emby/logs:/logs"
-      - "${SHOWS_DIR}:/media/shows"
-      - "${MOVIES_DIR}:/media/movies"
-      - "${MUSIC_DIR}:/media/music"
-      - "${UPLOAD_LOCATION}/upload:/media/immich"
+      - "${CONFIG_DIR}/emby/config:/config:cached"
+      - "${CONFIG_DIR}/emby/logs:/logs:cached"
+      - "${SHOWS_DIR}:/media/shows:cached"
+      - "${MOVIES_DIR}:/media/movies:cached"
+      - "${MUSIC_DIR}:/media/music:cached"
+      - "${IMMICH_DIR}/upload:/media/immich:cached"
     ports:
       - "8096:8096"
       - "8920:8920"
@@ -235,8 +236,8 @@ services:
   postgres:
     image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0
     container_name: postgres
-    cpus: 0.1
-    mem_limit: 512m
+    cpus: 0.5
+    mem_limit: 1g
     environment:
       DB_STORAGE_TYPE: HDD
       POSTGRES_DB: "${DB_DATABASE_NAME}"
@@ -259,8 +260,8 @@ services:
   redis:
     image: docker.io/valkey/valkey:8-bookworm
     container_name: redis
-    cpus: 0.1
-    mem_limit: 50m
+    cpus: 0.25
+    mem_limit: 256m
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
     restart: always
@@ -281,8 +282,8 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-    cpus: 0.1
-    mem_limit: 1g
+    cpus: 2.0
+    mem_limit: 4g
     env_file:
       - .env
     volumes:
@@ -300,12 +301,13 @@ services:
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
     container_name: immich_server
     runtime: nvidia
-    cpus: 1
-    mem_limit: 1g
+    cpus: 2.5
+    mem_limit: 4g
     env_file:
       - .env
     volumes:
-      - "${UPLOAD_LOCATION}:/usr/src/app/upload"
+      - "${IMMICH_DIR}:/usr/src/app/upload:cached"
+      - "${UPLOADS_DIR}:/uploads:cached"
       - /etc/localtime:/etc/localtime:ro
     ports:
       - "2283:2283"
@@ -324,11 +326,11 @@ services:
   dozzle:
     image: amir20/dozzle:latest
     container_name: dozzle
-    cpus: 0.1
+    cpus: 0.25
     mem_limit: 256m
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - "${CONFIG_DIR}/dozzle:/data"
+      - "${CONFIG_DIR}/dozzle:/data:cached"
     environment:
       DOZZLE_AUTH_PROVIDER: simple
     expose:
@@ -339,6 +341,69 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  plex:
+    image: plexinc/pms-docker:latest
+    container_name: plex
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Jerusalem
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+      - "${CONFIG_DIR}/plex:/config"
+      - "${SHOWS_DIR}:/data/tv"
+      - "${MOVIES_DIR}:/data/movies"
+      - "${MUSIC_DIR}:/data/music"
+      - "${DOWNLOADS_DIR}:/data/downloads"
+      - "${CONFIG_DIR}/plex/transcode:/transcode"
+    ports:
+      - "32400:32400"
+      - "32469:32469"
+      - "1900:1900/udp"
+      - "5353:5353/udp"
+      - "32410:32410/udp"
+      - "32412:32412/udp"
+      - "32413:32413/udp"
+      - "32414:32414/udp"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    runtime: nvidia
+    restart: unless-stopped
+
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    user: uid:gid
+    network_mode: 'host'
+    volumes:
+      - /path/to/config:/config
+      - /path/to/cache:/cache
+      - type: bind
+        source: /path/to/media
+        target: /media
+      - type: bind
+        source: /path/to/media2
+        target: /media2
+        read_only: true
+      # Optional - extra fonts to be used during transcoding with subtitle burn-in
+      - type: bind
+        source: /path/to/fonts
+        target: /usr/local/share/fonts/custom
+        read_only: true
+    restart: 'unless-stopped'
+    # Optional - alternative address used for autodiscovery
+    environment:
+      - JELLYFIN_PublishedServerUrl=http://example.com
+    # Optional - may be necessary for docker healthcheck to pass if running in host network mode
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
 
 networks:
   default:
